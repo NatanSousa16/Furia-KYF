@@ -6,17 +6,34 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="main-container">
-    <div class="header">
-        <h1>Dados Recebidos</h1>
+    <div class="main-container">
+        <div class="header">
+            <h1>Dados Recebidos</h1>
+        </div>
+
+        <div class="chat-box">
+            <p><strong>Nome:</strong> {{ data.nome }}</p>
+            <p><strong>Email:</strong> {{ data.email }}</p>
+            <p><strong>Endereço:</strong> {{ data.endereco }}</p>
+            <p><strong>CPF:</strong> {{ data.cpf }}</p>
+            <p><strong>Interesses:</strong> {{ ', '.join(data.interesses) }}</p>
+            <p><strong>Atividades:</strong> {{ data.atividades }}</p>
+            <p><strong>Eventos:</strong> {{ data.eventos }}</p>
+            <p><strong>Compras:</strong> {{ data.compras }}</p>
+        </div>
+
+        <div class="resultado">
+            <h2>Validação do Documento</h2>
+            <div class="validation-result">
+                <div class="status {% if 'NÃO VALIDADO' in data.resultado_ia %}invalid{% else %}valid{% endif %}">
+                    {{ data.resultado_ia.split('\n')[0] }}
+                </div>
+                <div class="justification">
+                    {{ data.resultado_ia.split('\n')[1] | safe }}
+                </div>
+            </div>
+        </div>
+        </div>
     </div>
-    <div class="chat-box">
-        <p><strong>Nome:</strong> {{ data.nome }}</p>
-        <p><strong>Email:</strong> {{ data.email }}</p>
-        <p><strong>Endereço:</strong> {{ data.endereco }}</p>
-        <p><strong>CPF:</strong> {{ data.cpf }}</p>
-        <p><strong>Interesses:</strong> {{ ', '.join(data.interesses) }}</p>
-    </div>
-</div>
 </body>
 </html>
