@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="main-container">
+    <div class="header">
+        <h1>Dados Recebidos</h1>
+    </div>
+    <div class="chat-box">
+        <p><strong>Nome:</strong> {{ data.nome }}</p>
+        <p><strong>Email:</strong> {{ data.email }}</p>
+        <p><strong>Endereço:</strong> {{ data.endereco }}</p>
+        <p><strong>CPF:</strong> {{ data.cpf }}</p>
+        <p><strong>Interesses:</strong> {{ ', '.join(data.interesses) }}</p>
+    </div>
+</div>
+</body>
+</html>

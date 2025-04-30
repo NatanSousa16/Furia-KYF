@@ -1,0 +1,353 @@
+/* style.css - Cyber Strike Edition */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Rajdhani', sans-serif;
+    background: #000 url('/static/furia-logo.png') repeat;
+    background-size: 200px; /* Reduzindo o tamanho do logo */
+    background-attachment: fixed;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+}
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(0, 0, 0, 0.9),
+        rgba(0, 0, 0, 0.9)
+    );
+    z-index: 0;
+}
+
+input[type="text"],
+input[type="email"] {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid #FFD700;
+    border-radius: 5px;
+    background: rgba(42, 42, 42, 0.8);
+    color: #FFD700;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus {
+    background: rgba(42, 42, 42, 1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+input::placeholder {
+    color: #666;
+    font-style: italic;
+}
+
+input[type="checkbox"] {
+    accent-color: #FFD700;
+    transform: scale(1.2);
+    margin-right: 8px;
+}
+
+form input[type="text"],
+form input[type="email"],
+form label:not(.checkbox-label) {
+    display: block;
+    margin-bottom: 15px;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 25px; /* espaçamento vertical e horizontal */
+    margin-bottom: 20px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #FFD700;
+}
+
+
+.main-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 120px;
+    opacity: 0.1;
+    z-index: -1;
+    animation: bgScroll 20s linear infinite;
+}
+
+textarea {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid #FFD700;
+    border-radius: 5px;
+    background: rgba(42, 42, 42, 0.8);
+    color: #FFD700;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    resize: vertical;
+}
+
+textarea:focus {
+    background: rgba(42, 42, 42, 1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+
+@keyframes bgScroll {
+    from { background-position: 0 0; }
+    to { background-position: 400px 400px; }
+}
+
+.main-container, .chat-container {
+    background: rgba(18, 18, 18, 0.95);
+    border-radius: 8px;
+    border: 2px solid #FFD700;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    z-index: 1; /* Garantir que fique acima do overlay */
+}
+
+.main-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+
+.header h1 {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 36px;
+    margin: 0;
+    text-align: center;
+    color: #FFD700;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    letter-spacing: 3px;
+    position: relative;
+}
+
+.header h1::after {
+    content: '';
+    display: block;
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #FFD700, transparent);
+    margin: 10px auto;
+}
+
+.navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 25px 0;
+}
+
+.navigation li {
+    margin: 20px 0;
+    position: relative;
+}
+
+.navigation a {
+    display: block;
+    padding: 15px 25px;
+    background: rgba(34, 34, 34, 0.8);
+    border: 1px solid #FFD700;
+    border-radius: 5px;
+    color: #FFD700;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    position: relative;
+    overflow: hidden;
+}
+
+.navigation a:hover {
+    background: rgba(255, 215, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.chat-box {
+    background: rgba(31, 31, 31, 0.9);
+    border: 1px solid #FFD700;
+    border-radius: 5px;
+    padding: 20px;
+    height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    backdrop-filter: blur(5px);
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.input-area input[type="text"] {
+    flex: 1;
+    padding: 12px 20px;
+    border: 1px solid #FFD700;
+    border-radius: 5px;
+    background: rgba(42, 42, 42, 0.8);
+    color: #FFD700;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.input-area input[type="text"]:focus {
+    background: rgba(42, 42, 42, 1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.input-area input::placeholder {
+    color: #666;
+    font-style: italic;
+}
+
+.input-area button {
+    background: linear-gradient(45deg, #FFD700, #FFAA00);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 5px;
+    color: #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.input-area button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.input-area button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: rotate(45deg);
+}
+
+.message {
+    padding: 12px 18px;
+    border-radius: 5px;
+    max-width: 85%;
+    position: relative;
+    animation: messagePop 0.3s ease-out;
+}
+
+@keyframes messagePop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.user {
+    align-self: flex-end;
+    background: linear-gradient(45deg, #4a90e2, #2a5ba3);
+    color: #fff;
+    border: 1px solid #6ba8ff;
+}
+
+.bot {
+    align-self: flex-start;
+    background: linear-gradient(45deg, #333, #222);
+    color: #FFD700;
+    border: 1px solid #FFD700;
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+}
+
+.typing-dot {
+    width: 10px;
+    height: 10px;
+    background: #FFD700;
+    border-radius: 50%;
+    animation: radarPulse 1.2s infinite;
+}
+
+@keyframes radarPulse {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+/* Efeito de glitch no hover */
+.navigation a:hover::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, transparent 45%, #FFD700 50%, transparent 55%);
+    z-index: -1;
+    animation: glitch 0.3s infinite;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+@media (max-width: 600px) {
+    .header h1 { font-size: 28px; }
+    .chat-box { height: 300px; }
+    .input-area button { padding: 12px 20px; }
+}
