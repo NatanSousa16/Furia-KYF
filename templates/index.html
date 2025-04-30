@@ -12,7 +12,7 @@
         <div class="header">
             <h1>Know Your Fan</h1>
         </div>
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <input type="text" name="nome" placeholder="Nome completo" required><br><br>
             <input type="email" name="email" placeholder="Email" required><br><br>
             <input type="text" name="endereco" placeholder="Endereço" required><br><br>
@@ -29,18 +29,22 @@
                 <label class="checkbox-label">
                     <input type="checkbox" name="interesse" value="campeonatos"> Campeonatos
                 </label>
-                <label for="atividades">Atividades realizadas nos últimos 12 meses:</label>
-                <textarea id="atividades" name="atividades" rows="4"
-                    placeholder="Descreva aqui as atividades relacionadas à FURIA, e-sports ou comunidade."></textarea>
-                <label for="eventos">Eventos frequentados no último ano:</label>
-                <textarea id="eventos" name="eventos" rows="4"
-                    placeholder="Liste os eventos que você participou relacionados à e-sports."></textarea>
-                <label for="compras">Compras relacionadas à FURIA/e-sports no último ano:</label>
-                <textarea id="compras" name="compras" rows="4"
-                    placeholder="Ex: camisas, ingressos, periféricos, etc."></textarea>
-
-                <!-- Adicione mais aqui -->
             </div>
+
+            <label for="atividades">Atividades realizadas nos últimos 12 meses:</label>
+            <textarea id="atividades" name="atividades" rows="4"
+                placeholder="Descreva aqui as atividades relacionadas à FURIA, e-sports ou comunidade."></textarea>
+
+            <label for="eventos">Eventos frequentados no último ano:</label>
+            <textarea id="eventos" name="eventos" rows="4"
+                placeholder="Liste os eventos que você participou relacionados à e-sports."></textarea>
+
+            <label for="compras">Compras relacionadas à FURIA/e-sports no último ano:</label>
+            <textarea id="compras" name="compras" rows="4"
+                placeholder="Ex: camisas, ingressos, periféricos, etc."></textarea>
+
+                <label>Documento (Imagem):</label>
+                <input type="file" name="documento" accept=".jpg,.jpeg,.png,.webp" required>
 
             <div class="input-area">
                 <button type="submit">Enviar</button>
