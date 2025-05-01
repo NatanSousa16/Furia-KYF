@@ -20,6 +20,7 @@
             <p><strong>Atividades:</strong> {{ data.atividades }}</p>
             <p><strong>Eventos:</strong> {{ data.eventos }}</p>
             <p><strong>Compras:</strong> {{ data.compras }}</p>
+            <p><strong>Link do Perfil:</strong> <a href="{{ data.link_perfil }}" target="_blank">{{ data.link_perfil }}</a></p>
         </div>
 
         <div class="resultado">
@@ -33,6 +34,17 @@
                 </div>
             </div>
         </div>
+
+        <div class="resultado">
+            <h2>Análise do Perfil Online</h2>
+            <div class="validation-result">
+                <div class="status {% if 'Relevante' in data.resultado_link %}valid{% else %}invalid{% endif %}">
+                    {{ data.resultado_link.split('\n')[0] }}
+                </div>
+                <div class="justification">
+                    {{ data.resultado_link.split('\n')[1] | safe }}
+                </div>
+            </div>
         </div>
     </div>
 </body>
