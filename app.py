@@ -2,22 +2,128 @@ import os
 import base64
 import re
 import unicodedata
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for, session, jsonify, redirect
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image
 from pdf2image import convert_from_path
 import tempfile
+from authlib.integrations.flask_client import OAuth
+from flask_openid import OpenID
+
 
 # Carregar variáveis do .env
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+STEAM_API_KEY = os.getenv("STEAM_API_KEY")
+DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
+DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
+TWITCH_CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
+app.debug = True
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'pdf'}
+
+oid = OpenID(app)
+oauth = OAuth(app)
+
+steam = oauth.register(
+    'steam',
+    client_id='STEAM_API_KEY',
+    authorize_url='https://steamcommunity.com/openid/login',
+    access_token_url=None,
+    client_kwargs={'scope': 'openid'},
+)
+
+# Configuração do Discord OAuth
+discord = oauth.register(
+    'discord',
+    client_id=os.getenv('DISCORD_CLIENT_ID'),
+    client_secret=os.getenv('DISCORD_CLIENT_SECRET'),
+    authorize_url='https://discord.com/oauth2/authorize',
+    access_token_url='https://discord.com/api/oauth2/token',
+    refresh_token_url=None,
+    client_kwargs={'scope': 'identify email'},
+)
+
+# Configuração do Twitch OAuth
+twitch = oauth.register(
+    'twitch',
+    client_id=os.getenv('TWITCH_CLIENT_ID'),
+    client_secret=os.getenv('TWITCH_CLIENT_SECRET'),
+    authorize_url='https://id.twitch.tv/oauth2/authorize',
+    access_token_url='https://id.twitch.tv/oauth2/token',
+    refresh_token_url=None,
+    client_kwargs={'scope': 'user:read:email'},
+)
+
+# Rota para Steam OAuth
+@app.route('/login/steam')
+def login_steam():
+    # Indica que a resposta de autenticação deve ser enviada para 'auth_steam'
+    redirect_uri = url_for('auth_steam', _external=True)
+    return steam.authorize_redirect(redirect_uri)
+
+@app.route('/login/steam/authorized')
+def auth_steam():
+    token = steam.authorize_access_token()
+    
+    # Processa os dados retornados após a autenticação
+    user_info = steam.get('https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/', token=token)
+    
+    # Salva o nome do usuário na sessão
+    session['user'] = {'name': user_info.json()['response']['players'][0]['personaname']}
+    
+    return redirect(url_for('index'))
+
+# Rota para Discord OAuth
+@app.route('/login/discord')
+def login_discord():
+    redirect_uri = 'https://127.0.0.1:5000/login/discord/authorized'
+    return discord.authorize_redirect(redirect_uri)
+
+# Rota para Twitch OAuth
+@app.route('/login/twitch')
+def login_twitch():
+    redirect_uri = url_for('auth_twitch', _external=True)
+    return twitch.authorize_redirect(redirect_uri)
+
+# Callback de autenticação para Steam
+def auth_steam():
+    # Verifica se a autenticação foi bem-sucedida
+    if oid.verify():
+        user_info = oid.fetch()
+        # Armazenar as informações do usuário na sessão
+        session['user'] = {'name': user_info}
+        return redirect(url_for('index'))
+
+# Callback de autenticação para Discord
+@app.route('/login/discord/authorized')
+def auth_discord():
+    token = discord.authorize_access_token()
+    user_info = discord.get('https://discord.com/api/v10/users/@me', token=token)
+    session['user'] = {'name': user_info.json()['username']}
+    return redirect(url_for('index'))
+
+# Callback de autenticação para Twitch
+@app.route('/login/twitch/authorized')
+def auth_twitch():
+    token = twitch.authorize_access_token()
+    user_info = twitch.get('https://api.twitch.tv/helix/users', token=token)
+    session['user'] = {'name': user_info.json()['data'][0]['display_name']}
+    return redirect(url_for('index'))
+
+# Página inicial
+@app.route('/')
+def index():
+    if 'user' in session:
+        return f'Olá, {session["user"]["name"]}'
+    return render_template('index.html')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -221,4 +327,6 @@ def form():
     return render_template('index.html')
 
 if __name__ == '__main__':
+    context = ('cert.pem', 'key.pem')  # Certificado e chave privada
+    app.run(host='127.0.0.1', port=5000, ssl_context=context)
     app.run(debug=True)
