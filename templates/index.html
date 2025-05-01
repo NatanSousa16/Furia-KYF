@@ -8,9 +8,25 @@
 <body>
     <div class="main-container">
         <div class="header">
-            <h1>Know Your Fan</h1>
+            <!-- Adicionando ícones clicáveis para as rotas de login -->
+            <h1>Know Your Fan</h1>            
+            <div class="social-icons">
+                <!-- Redirecionando para a rota de login do Steam -->
+                <a href="{{ url_for('login_steam') }}">
+                    <img src="{{ url_for('static', filename='images/steam.png') }}" alt="Steam" class="social-icon">
+                </a>
+                <!-- Redirecionando para a rota de login do Discord -->
+                <a href="{{ url_for('login_discord') }}">
+                    <img src="{{ url_for('static', filename='images/discord.png') }}" alt="Discord" class="social-icon">
+                </a>
+                <!-- Redirecionando para a rota de login do Twitch -->
+                <a href="{{ url_for('login_twitch') }}">
+                    <img src="{{ url_for('static', filename='images/twitch.png') }}" alt="Twitch" class="social-icon">
+                </a>
+            </div>
         </div>
 
+        <!-- Formulário de coleta de informações do usuário -->
         <form method="POST" enctype="multipart/form-data">
             <input type="text" name="nome" placeholder="Nome completo" required><br><br>
             <input type="email" name="email" placeholder="Email" required><br><br>
