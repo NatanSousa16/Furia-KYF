@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <title>FuriaKYN</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
     <div class="main-container">
         <div class="header">
             <h1>Know Your Fan</h1>
         </div>
+
         <form method="POST" enctype="multipart/form-data">
             <input type="text" name="nome" placeholder="Nome completo" required><br><br>
             <input type="email" name="email" placeholder="Email" required><br><br>
             <input type="text" name="endereco" placeholder="Endereço" required><br><br>
-            <input type="text" name="cpf" placeholder="CPF" required><br><br>
+            <input type="text" name="cpf" placeholder="CPF (somente números)" required><br><br>
 
             <label>Interesses:</label><br>
             <div class="checkbox-group">
@@ -43,14 +42,16 @@
             <textarea id="compras" name="compras" rows="4"
                 placeholder="Ex: camisas, ingressos, periféricos, etc."></textarea>
 
-                <label>Documento (Imagem):</label>
-                <input type="file" name="documento" accept=".jpg,.jpeg,.png,.webp" required>
+            <label for="link_perfil">Link de perfil em site de e-sports:</label>
+            <input type="url" name="link_perfil" placeholder="https://..." required><br><br>
+
+            <label>Documento (Imagem ou PDF):</label>
+            <input type="file" name="documento" accept=".jpg,.jpeg,.png,.webp,.pdf" required><br><br>
 
             <div class="input-area">
-                <button type="submit">Enviar</button>
+                <button type="submit">Enviar Validação</button>
             </div>
         </form>
     </div>
 </body>
-
 </html>
