@@ -11,6 +11,7 @@ from pdf2image import convert_from_path
 import tempfile
 from authlib.integrations.flask_client import OAuth
 from flask_openid import OpenID
+import mysql.connector
 
 
 # Carregar variáveis do .env
@@ -28,6 +29,55 @@ app.debug = True
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'pdf'}
+
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="root",
+    database="KYF"
+)
+cursor = db.cursor()
+
+@app.route('/', methods=['GET', 'POST'])
+def coletar_dados():
+    if request.method == 'POST':
+        nome = request.form['nome']
+        email = request.form['email']
+        endereco = request.form['endereco']
+        cpf = request.form['cpf']
+        atividades = request.form['atividades']
+        eventos = request.form['eventos']
+        compras = request.form['compras']
+        link_perfil = request.form['link_perfil']
+        interesses = request.form.getlist('interesse')
+
+        # Salvando os dados no banco
+        sql = '''
+        INSERT INTO DadoFans (nome, email, endereco, cpf, atividades, eventos, compras, links)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        '''
+        valores = (nome, email, endereco, cpf, atividades, eventos, compras, link_perfil)
+        cursor.execute(sql, valores)
+        db.commit()
+
+        # Passando os dados para o template 'result.html'
+        data = {
+            'nome': nome,
+            'email': email,
+            'endereco': endereco,
+            'cpf': cpf,
+            'atividades': atividades,
+            'eventos': eventos,
+            'compras': compras,
+            'link_perfil': link_perfil,
+            'interesses': interesses,
+            'resultado_ia': 'Documento validado com sucesso',  # Exemplo de retorno do IA
+            'resultado_link': 'Relevante para o perfil de e-sports'  # Exemplo de retorno da análise de link
+        }
+
+        return render_template('result.html', data=data)
+
+    return render_template('index.html')
 
 oid = OpenID(app)
 oauth = OAuth(app)
@@ -213,7 +263,7 @@ def form():
                                 "possa estar relacionado a organizações como a FURIA, times de e-sports ou interesses gerais em e-sports.\n"
                                 "Responda da seguinte forma:\n"
                                 "STATUS: Relevante/Irrelevante\n"
-                                "JUSTIFICATIVA: [explicação clara sobre a relação com a FURIA ou e-sports]"
+                                "JUSTIFICATIVA: [explicação clara e detalhada sobre oque é relevante para a pessoa baseado no link e ligue com a furia]"
                             )
                         },
                         {
@@ -222,7 +272,7 @@ def form():
                         }
                     ],
                     temperature=0.2,
-                    max_tokens=200
+                    max_tokens=500
                 )
 
                 raw_link_resp = link_response.choices[0].message.content.strip()
