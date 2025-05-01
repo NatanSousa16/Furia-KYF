@@ -378,3 +378,20 @@ textarea:focus {
     .chat-box { height: 300px; }
     .input-area button { padding: 12px 20px; }
 }
+
+input[type="text"].profile-link {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid #FFD700;
+    border-radius: 5px;
+    background: rgba(42, 42, 42, 0.8);
+    color: #FFD700;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s ease;
+    margin-bottom: 15px; /* Ajuste para igualar ao textarea */
+}
+
+input[type="text"].profile-link:focus {
+    background: rgba(42, 42, 42, 1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
