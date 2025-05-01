@@ -65,14 +65,20 @@ def form():
     }
 
     if request.method == 'POST':
-        # Coletar e validar dados
+        # Coletar dados do formulário
         cpf = request.form['cpf'].strip().replace('.', '').replace('-', '')
+        
+        # Inicializa a variável link_perfil
+        link_perfil = request.form.get('link_perfil', '').strip()
+
+        # Verifica se o CPF é válido
         if not validate_cpf(cpf):
+            form_data = {
+                'resultado_link': "🚨 CPF inválido"
+            }
             return render_template('error.html', message="CPF inválido"), 400
 
         # Normalizar nome do usuário
-        nome_usuario = normalize_text(request.form['nome'])
-        
         form_data = {
             'nome': request.form['nome'].strip(),
             'email': request.form['email'].strip(),
@@ -82,8 +88,58 @@ def form():
             'atividades': request.form['atividades'].strip(),
             'eventos': request.form['eventos'].strip(),
             'compras': request.form['compras'].strip(),
-            'resultado_ia': "Nenhum documento enviado."
+            'resultado_ia': "Nenhum documento enviado.",
+            'link_perfil': link_perfil,  # Adicionando o link_perfil no form_data
+            'resultado_link': "Nenhum link enviado."
         }
+
+        if link_perfil:
+            try:
+                # Requisição para a IA analisar o link
+                link_response = client.chat.completions.create(
+                    model="gpt-4-turbo",
+                    messages=[ 
+                        {
+                            "role": "system",
+                            "content": (
+                                "Você é uma IA que avalia perfis online. "
+                                "Analise o conteúdo de um link de perfil de e-sports ou qualquer outro conteúdo online que "
+                                "possa estar relacionado a organizações como a FURIA, times de e-sports ou interesses gerais em e-sports.\n"
+                                "Responda da seguinte forma:\n"
+                                "STATUS: Relevante/Irrelevante\n"
+                                "JUSTIFICATIVA: [explicação clara sobre a relação com a FURIA ou e-sports]"
+                            )
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Link do perfil: {link_perfil}\nInteresses: {', '.join(form_data['interesses'])}"
+                        }
+                    ],
+                    temperature=0.2,
+                    max_tokens=200
+                )
+
+                raw_link_resp = link_response.choices[0].message.content.strip()
+                status_link = "INDETERMINADO"
+                justificativa_link = "Resposta não interpretada"
+
+                # Verificar se a resposta contém a estrutura de status e justificativa
+                if "STATUS:" in raw_link_resp and "JUSTIFICATIVA:" in raw_link_resp:
+                    status_match = re.search(r"STATUS:\s*(Relevante|Irrelevante)", raw_link_resp, re.IGNORECASE)
+                    justificativa_match = re.search(r"JUSTIFICATIVA:\s*(.+)", raw_link_resp, re.DOTALL)
+
+                    if status_match and justificativa_match:
+                        status_link = status_match.group(1).capitalize()
+                        justificativa_link = justificativa_match.group(1).strip()
+
+                form_data['resultado_link'] = (
+                    f"{'✅ Perfil Relevante' if status_link == 'Relevante' else '❌ Perfil Irrelevante'}\n"
+                    f"Justificativa: {justificativa_link}"
+                )
+
+            except Exception as e:
+                form_data['resultado_link'] = f"🚨 ERRO: {str(e)}"
+                app.logger.error(f"Erro na análise do link: {str(e)}")
 
         documento = request.files['documento']
         if documento and allowed_file(documento.filename):
@@ -101,55 +157,55 @@ def form():
                 img.save(processed_path)
                 base64_image = encode_image(processed_path)
 
-                # Chamada à API
+                # Chamada à API para validar o documento
                 response = client.chat.completions.create(
-                    model="gpt-4-turbo",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                "Valide documentos seguindo estas regras:\n"
-                                "1. Ignore acentos e diferenças de caixa\n"
-                                "2. Invalide apenas por diferenças reais\n"
-                                "Formato resposta:\n"
-                                "STATUS: VALIDADO/NÃO VALIDADO\n"
-                                "JUSTIFICATIVA: [motivo técnico]"
-                            )
-                        },
-                        {
-                            "role": "user", 
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": f"Verifique se o documento contém: {nome_usuario}"
-                                },
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/jpeg;base64,{base64_image}"
-                                    }
-                                }
-                            ]
-                        }
-                    ],
-                    temperature=0.0,
-                    max_tokens=150
-                )
+    model="gpt-4-turbo",
+    messages=[
+        {
+            "role": "system",
+            "content": (
+                "Valide documentos seguindo estas regras:\n"
+                "1. Ignore acentos e diferenças de caixa\n"
+                "2. Invalide apenas por diferenças reais\n"
+                "Formato resposta:\n"
+                "STATUS: VALIDADO/NÃO VALIDADO\n"
+                "JUSTIFICATIVA: [motivo técnico]"
+            )
+        },
+        {
+            "role": "user", 
+            "content": [
+                {
+                    "type": "text",
+                    "text": f"Verifique se o documento contém: {form_data['nome']}"  # Correção aqui
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                    }
+                }
+            ]
+        }
+    ],
+    temperature=0.0,
+    max_tokens=150
+)
 
                 # Processar resposta
                 raw_response = response.choices[0].message.content.strip()
                 status = "INDETERMINADO"
                 justificativa = "Resposta não interpretada"
 
-                # Extrair status
-                if status_match := re.search(r"STATUS:\s*(VALIDADO|NÃO VALIDADO|NAO VALIDADO)", raw_response, re.IGNORECASE):
-                    status = status_match.group(1).upper()
-                    status = "NÃO VALIDADO" if "NAO" in status else status
-                    
-                    # Extrair e filtrar justificativa
-                    if just_match := re.search(r"JUSTIFICATIVA:\s*(.+)", raw_response, re.DOTALL):
-                        justificativa = re.sub(r"\b(acentuação|acentos)\b", "grafia", 
-                                             just_match.group(1).strip(), flags=re.IGNORECASE)
+                # Verificar a resposta da IA
+                if "STATUS:" in raw_response and "JUSTIFICATIVA:" in raw_response:
+                    status_match = re.search(r"STATUS:\s*(VALIDADO|NÃO VALIDADO|NAO VALIDADO)", raw_response, re.IGNORECASE)
+                    justificativa_match = re.search(r"JUSTIFICATIVA:\s*(.+)", raw_response, re.DOTALL)
+
+                    if status_match and justificativa_match:
+                        status = status_match.group(1).upper()
+                        status = "NÃO VALIDADO" if "NAO" in status else status
+                        justificativa = justificativa_match.group(1).strip()
 
                 form_data['resultado_ia'] = (
                     f"{status_emoji.get(status, status_emoji['INDETERMINADO'])}\n"
