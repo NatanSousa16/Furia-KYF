@@ -34,11 +34,10 @@ db = mysql.connector.connect(
     host="localhost",
     user="root",
     password="root",
-    database="KYF"
+    database="FuriaDB"
 )
 cursor = db.cursor()
 
-@app.route('/', methods=['GET', 'POST'])
 def coletar_dados():
     if request.method == 'POST':
         nome = request.form['nome']
@@ -70,9 +69,7 @@ def coletar_dados():
             'eventos': eventos,
             'compras': compras,
             'link_perfil': link_perfil,
-            'interesses': interesses,
-            'resultado_ia': 'Documento validado com sucesso',  # Exemplo de retorno do IA
-            'resultado_link': 'Relevante para o perfil de e-sports'  # Exemplo de retorno da análise de link
+            'interesses': interesses, # Exemplo de retorno da análise de link
         }
 
         return render_template('result.html', data=data)
@@ -223,16 +220,7 @@ def form():
     if request.method == 'POST':
         # Coletar dados do formulário
         cpf = request.form['cpf'].strip().replace('.', '').replace('-', '')
-        
-        # Inicializa a variável link_perfil
         link_perfil = request.form.get('link_perfil', '').strip()
-
-        # Verifica se o CPF é válido
-        if not validate_cpf(cpf):
-            form_data = {
-                'resultado_link': "🚨 CPF inválido"
-            }
-            return render_template('error.html', message="CPF inválido"), 400
 
         # Normalizar nome do usuário
         form_data = {
@@ -245,9 +233,16 @@ def form():
             'eventos': request.form['eventos'].strip(),
             'compras': request.form['compras'].strip(),
             'resultado_ia': "Nenhum documento enviado.",
-            'link_perfil': link_perfil,  # Adicionando o link_perfil no form_data
+            'link_perfil': link_perfil,
+            'resultado_ia': "Nenhum documento enviado.",
             'resultado_link': "Nenhum link enviado."
         }
+        
+        
+        # Verifica se o CPF é válido
+        if not validate_cpf(cpf):
+            form_data['resultado_link'] = "🚨 CPF inválido"
+            return render_template('error.html', message="CPF inválido", data=form_data), 400
 
         if link_perfil:
             try:
@@ -317,51 +312,93 @@ def form():
                 response = client.chat.completions.create(
     model="gpt-4-turbo",
     messages=[
-        {
-            "role": "system",
-            "content": (
-                "Valide documentos seguindo estas regras:\n"
-                "1. Ignore acentos e diferenças de caixa\n"
-                "2. Invalide apenas por diferenças reais\n"
-                "Formato resposta:\n"
-                "STATUS: VALIDADO/NÃO VALIDADO\n"
-                "JUSTIFICATIVA: [motivo técnico]"
-            )
-        },
-        {
-            "role": "user", 
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Verifique se o documento contém: {form_data['nome']}"  # Correção aqui
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}"
-                    }
+    {
+        "role": "system",
+        "content": "Você é um validador de documentos. Analise a imagem fornecida comparando com os dados: Nome: {nome} CPF: {cpf} Sua resposta DEVE seguir EXATAMENTE este formato: STATUS: [VALIDADO/NÃO VALIDADO] JUSTIFICATIVA: [Explicação detalhada da decisão] ATENÇÃO PARA NUMEROS SEMELHANTES ESCRITOS COMO 5 e 6 E LETRAS SEMELHANTES COMO S E Z Critérios:1. VALIDADO se:- Nome e CPF na imagem coincidem com os dados fornecidos - Documento parece autêntico e legível 2. NÃO VALIDADO se: - Qualquer divergência nos dados - Documento ilegível, adulterado ou incompleto"  # Mantenha seu system prompt   
+    },
+    {
+        "role": "user", 
+        "content": [
+            {
+                "type": "text",
+                "text": f"Verifique se o documento contém:\nNome: {form_data['nome']}\nCPF: {cpf}"
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{base64_image}"
                 }
-            ]
-        }
+            }
+        ]
+    }
     ],
     temperature=0.0,
     max_tokens=150
 )
 
+                
+
+                # Padrões melhorados com flexibilidade
+                status_pattern = r"(?i)(status|resultado|validação)\s*[:.-]?\s*(validado|não validado|nao validado|inválido|invalido|aprovado|reprovado|negado|incorreto)"
+                justificativa_pattern = r"(?i)(justificativa|motivo|razão|explicação|análise)\s*[:.-]?\s*(.*?)(?=(status|resultado|validação|$))"
+                
+                
+                status_mapping = {
+                    'validado': 'VALIDADO',
+                    'aprovado': 'VALIDADO',
+                    'reprovado': 'NÃO VALIDADO',
+                    'inválido': 'NÃO VALIDADO', 
+                    'invalido': 'NÃO VALIDADO',
+                    'nao validado': 'NÃO VALIDADO',
+                    'não validado': 'NÃO VALIDADO',
+                    'negado': 'NÃO VALIDADO',
+                    'incorreto': 'NÃO VALIDADO'
+                }
+
                 # Processar resposta
                 raw_response = response.choices[0].message.content.strip()
                 status = "INDETERMINADO"
                 justificativa = "Resposta não interpretada"
+                
+                status_match = re.search(status_pattern, raw_response, re.DOTALL | re.IGNORECASE)
+                justificativa_match = re.search(justificativa_pattern, raw_response, re.DOTALL | re.IGNORECASE)
+                
+                # Normalizar status
+                if status_match:
+                    raw_status = status_match.group(2).strip().lower()
+                    status = status_mapping.get(raw_status, 'INDETERMINADO')
 
-                # Verificar a resposta da IA
-                if "STATUS:" in raw_response and "JUSTIFICATIVA:" in raw_response:
-                    status_match = re.search(r"STATUS:\s*(VALIDADO|NÃO VALIDADO|NAO VALIDADO)", raw_response, re.IGNORECASE)
-                    justificativa_match = re.search(r"JUSTIFICATIVA:\s*(.+)", raw_response, re.DOTALL)
-
-                    if status_match and justificativa_match:
-                        status = status_match.group(1).upper()
-                        status = "NÃO VALIDADO" if "NAO" in status else status
-                        justificativa = justificativa_match.group(1).strip()
+                # Capturar justificativa
+                if justificativa_match:
+                    justificativa = justificativa_match.group(2).strip()
+                    justificativa = re.sub(r'\s+', ' ', justificativa)  # Remover espaços múltiplos
+                
+                # Fallback 1 - Busca contextual
+                if status == 'INDETERMINADO':
+                    if any(palavra in raw_response.lower() for palavra in ["confere", "correto", "coincide", "match"]):
+                        status = "VALIDADO"
+                    elif any(palavra in raw_response.lower() for palavra in ["não confere", "incorreto", "divergente", "errado"]):
+                        status = "NÃO VALIDADO"
+                        
+                # Fallback 2 - Análise de sentimento
+                if status == 'INDETERMINADO':
+                    positive_words = ['valid', 'correct', 'match', 'positiv']
+                    negative_words = ['invalid', 'incorrect', 'mismatch', 'negativ']
+                    
+                    if any(word in raw_response.lower() for word in positive_words):
+                        status = "VALIDADO"
+                    elif any(word in raw_response.lower() for word in negative_words):
+                        status = "NÃO VALIDADO"
+                        
+                # Atualizar com matches encontrados
+                if status_match:
+                    status = status_match.group(2).upper()
+                    status = "NÃO VALIDADO" if status in ["NAO VALIDADO", "INVALIDO", "INVÁLIDO", "REPROVADO"] else status
+                    
+                if justificativa_match:
+                    justificativa = justificativa_match.group(2).strip()
+                    
+                status = status if status in ["VALIDADO", "NÃO VALIDADO"] else "INDETERMINADO"
 
                 form_data['resultado_ia'] = (
                     f"{status_emoji.get(status, status_emoji['INDETERMINADO'])}\n"
